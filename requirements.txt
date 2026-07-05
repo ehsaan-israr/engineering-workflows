@@ -1,0 +1,28 @@
+# Python >= 3.9 required
+#
+# Install all deps (runtime + dev):
+#   uv pip install -r requirements.txt
+
+# ── Jira ──────────────────────────────────────────────────────────────────────
+# Official Atlassian REST API wrapper
+# https://pypi.org/project/atlassian-python-api/
+atlassian-python-api==3.41.19
+
+# ── Azure DevOps ──────────────────────────────────────────────────────────────
+# Official Microsoft Python SDK (powers the Azure CLI extension)
+# https://pypi.org/project/azure-devops/
+azure-devops==7.1.0b4
+
+# Required by azure-devops for authentication
+msrest==0.7.1
+
+# ── YAML ──────────────────────────────────────────────────────────────────────
+# Used by kiro_setup to convert agent.yaml -> agent.json
+pyyaml==6.0.2
+
+# ── Testing ───────────────────────────────────────────────────────────────────
+pytest>=7.0
+
+# ── Formatting & linting ──────────────────────────────────────────────────────
+black==24.4.2
+ruff==0.4.4
