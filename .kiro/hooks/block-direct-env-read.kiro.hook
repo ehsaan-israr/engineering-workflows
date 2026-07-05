@@ -1,0 +1,16 @@
+{
+  "enabled": true,
+  "name": "Block Direct .env Access",
+  "description": "Intercepts any read tool call targeting the .env file and blocks it, enforcing that credentials are only loaded via shared/env.py Python scripts.",
+  "version": "1",
+  "when": {
+    "type": "preToolUse",
+    "toolTypes": [
+      "*"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Check if the tool call is attempting to read a file whose path ends with \".env\" or matches the pattern \"*.env\" (e.g. /path/to/.env, .env, ../.env). \n\nIf YES — the target is a .env file:\n  Respond with: \"ACCESS DENIED: Direct reading of .env files is not permitted. Credentials must be loaded exclusively through the shared/env.py Python module (load_env_file / require / optional helpers). Use the provided agent scripts instead of reading .env directly.\"\n  Do NOT proceed with the tool call.\n\nIf NO — the target is any other file:\n  Respond with: \"ACCESS GRANTED\" and proceed normally."
+  }
+}

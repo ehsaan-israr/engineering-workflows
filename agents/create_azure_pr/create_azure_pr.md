@@ -55,9 +55,10 @@ source "$HOME/.workflow_env"
 
 ### Step 1 — Resolve inputs
 
-- If `source_branch` was not supplied, run `git rev-parse --abbrev-ref HEAD` and use the result.
+- If `source_branch` was not supplied, run `git rev-parse --abbrev-ref HEAD` **from the project repo directory** and use the result.
 - If `target_branch` was not supplied, use `release_candidate`.
 - If `rebase_source_with_target_branch` was not supplied, default to `true`.
+- Resolve `project_repo_path` — the absolute path to the project git repo (i.e. the repo the PR targets). This is the directory where `git remote get-url origin` returns an Azure DevOps URL. Store it for use in all subsequent git commands and script calls.
 
 ### Step 2 — Determine PR title
 
@@ -136,7 +137,7 @@ The description is built automatically by `create_azure_devops_pr.py` using
 
 ### Step 7 — Create the Azure DevOps PR
 
-Run from `WORKFLOW_REPO_ROOT` (resolved in Step 0):
+Run from `WORKFLOW_REPO_ROOT` (resolved in Step 0), passing the project repo path explicitly so the script reads the correct git remote:
 ```bash
 (cd "$WORKFLOW_REPO_ROOT" && \
   PYTHONPATH="$WORKFLOW_REPO_ROOT" \
@@ -144,6 +145,7 @@ Run from `WORKFLOW_REPO_ROOT` (resolved in Step 0):
   --title "<pr_title>" \
   --source <source_branch> \
   --target <target_branch> \
+  --repo-path "<project_repo_path>" \
   --jira-ticket "<jira_ticket>" \
   --jira-url "<jira_url>")
 ```

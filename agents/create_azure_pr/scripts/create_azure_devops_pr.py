@@ -113,16 +113,18 @@ def main() -> None:
     parser.add_argument("--jira-ticket", "-j", default="",    help="Jira ticket key for description, e.g. PROJ-123")
     parser.add_argument("--jira-url",    "-u", default="",    help="Full Jira ticket URL for description link")
     parser.add_argument("--draft",       action="store_true", help="Create as draft PR")
+    parser.add_argument("--repo-path",   "-r", default="",    help="Absolute path to the project git repo (required when CWD is not the project repo)")
     args = parser.parse_args()
 
     env = load_env_file()
 
     # resolve config
-    source_branch = args.source or current_branch()
+    repo_path     = args.repo_path or None
+    source_branch = args.source or current_branch(repo_path)
     target_branch = args.target or optional(env, "DEFAULT_TARGET", "release_candidate")
     azure_org, azure_pat = require(env, "AZURE_ORG", "AZURE_DEVOPS_PAT")
     org_url       = f"https://dev.azure.com/{azure_org}"
-    project, repo = get_repo_info()
+    project, repo = get_repo_info(repo_path)
 
     print(f"\n📬 Creating PR on Azure DevOps…")
     print("━" * 55)
@@ -136,7 +138,7 @@ def main() -> None:
     if args.draft:
         print(f"  Draft:   Yes")
 
-    commits        = commit_log_vs_target(source_branch, target_branch)
+    commits        = commit_log_vs_target(source_branch, target_branch, repo_path)
     pr_description = build_pr_description(args.jira_ticket, args.jira_url, args.title, commits)
 
     try:

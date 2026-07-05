@@ -16,29 +16,33 @@ import subprocess
 import sys
 
 
-def _git_out(*args) -> str:
+def _git_out(*args, cwd: str | None = None) -> str:
     """Run a git command and return stdout stripped of whitespace."""
-    result = subprocess.run(["git"] + list(args), capture_output=True, text=True)
+    result = subprocess.run(["git"] + list(args), capture_output=True, text=True, cwd=cwd)
     return result.stdout.strip()
 
 
-def current_branch() -> str:
+def current_branch(repo_path: str | None = None) -> str:
     """Return the currently checked-out branch name. Exits on detached HEAD."""
-    branch = _git_out("rev-parse", "--abbrev-ref", "HEAD")
+    branch = _git_out("rev-parse", "--abbrev-ref", "HEAD", cwd=repo_path)
     if not branch or branch == "HEAD":
         print("Error: Could not determine current branch (detached HEAD?).", file=sys.stderr)
         sys.exit(1)
     return branch
 
 
-def get_repo_info() -> tuple:
+def get_repo_info(repo_path: str | None = None) -> tuple:
     """
     Extract (project, repo) from the git remote 'origin' URL.
     Supports both SSH and HTTPS Azure DevOps remote formats:
       SSH  : git@ssh.dev.azure.com:v3/ORG/{Project}/{Repo}
       HTTPS: https://dev.azure.com/ORG/{Project}/_git/{Repo}
+
+    repo_path: path to the project git repo. Defaults to CWD.
+               Must be set when the script runs from a different directory
+               (e.g. WORKFLOW_REPO_ROOT) than the target project repo.
     """
-    remote = _git_out("remote", "get-url", "origin")
+    remote = _git_out("remote", "get-url", "origin", cwd=repo_path)
     if not remote:
         print("Error: Not in a git repo or 'origin' remote not set.", file=sys.stderr)
         sys.exit(1)
@@ -55,7 +59,7 @@ def get_repo_info() -> tuple:
     sys.exit(1)
 
 
-def commit_log_vs_target(source: str, target: str) -> list:
+def commit_log_vs_target(source: str, target: str, repo_path: str | None = None) -> list:
     """Return one-line commit messages on source that are not in origin/target."""
-    log = _git_out("log", f"origin/{target}..{source}", "--oneline")
+    log = _git_out("log", f"origin/{target}..{source}", "--oneline", cwd=repo_path)
     return log.splitlines() if log else []
