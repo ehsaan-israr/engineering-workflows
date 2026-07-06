@@ -24,6 +24,8 @@ Exit codes:
     1 – missing credentials or no valid PR URLs
 """
 
+from __future__ import annotations
+
 import argparse
 import os
 import re
@@ -43,7 +45,7 @@ from azure.devops.v7_1.git.models import (
 from azure.devops.v7_1.build.models import Build, BuildDefinitionReference
 from msrest.exceptions import HttpOperationError
 
-from shared.env import load_env_file, require, optional
+from shared.env import load_env_file, require
 from shared.azure_devops_client import get_connection
 
 
@@ -124,8 +126,11 @@ def approve_pr(git_client, project: str, repo: str, pr_id: int, user_id: str) ->
             print("  ✘ Authentication failed — check AZURE_DEVOPS_PAT.", file=sys.stderr)
         elif status == 403:
             print("  ✘ Permission denied — PAT needs Code (Read & Write) permission.", file=sys.stderr)
+        else:
+            print(f"  ✘ Approve failed (HTTP {status}): {body[:200]}", file=sys.stderr)
         return False
-    except Exception:
+    except Exception as e:
+        print(f"  ✘ Approve failed: {e}", file=sys.stderr)
         return False
 
 
@@ -201,7 +206,7 @@ def wait_for_merge(
 
 
 def trigger_pipeline(
-    build_client, project: str, repo: str, branch: str
+    build_client, org_url: str, project: str, repo: str, branch: str
 ) -> tuple[str | None, str | None]:
     """Find the pipeline matching the repo name and queue a run on `branch`."""
     try:
@@ -221,10 +226,7 @@ def trigger_pipeline(
     )
     try:
         queued: Build = build_client.queue_build(build=build, project=project)
-        org_url = build_client._connection.base_url.rstrip("/")
-        # Extract org name from URL for the result link
-        org = org_url.split("dev.azure.com/")[-1].split("/")[0]
-        run_url = f"https://dev.azure.com/{org}/{project}/_build/results?buildId={queued.id}"
+        run_url = f"{org_url.rstrip('/')}/{project}/_build/results?buildId={queued.id}"
         return run_url, None
     except HttpOperationError as e:
         return None, e.response.text or str(e)
@@ -249,10 +251,9 @@ def main() -> None:
     parser.add_argument("--delete-source", action="store_true", help="Delete source branch after merge")
     args = parser.parse_args()
 
-    # Load credentials
+    # Load credentials (AZURE_ORG is required — a single connection serves all PRs)
     env = load_env_file()
-    [pat] = require(env, "AZURE_DEVOPS_PAT")
-    org = optional(env, "AZURE_ORG")
+    pat, org = require(env, "AZURE_DEVOPS_PAT", "AZURE_ORG")
     org_url = f"https://dev.azure.com/{org}"
 
     # Parse and validate PR URLs
@@ -261,6 +262,15 @@ def main() -> None:
         parsed = parse_pr_url(url.strip())
         if not parsed:
             print(f"  Skipping invalid PR URL: {url}", file=sys.stderr)
+            continue
+        # All PRs share one connection built from AZURE_ORG; a URL pointing at a
+        # different org would be silently operated against the wrong org, so skip it.
+        if parsed["org"].lower() != org.lower():
+            print(
+                f"  Skipping PR URL from org '{parsed['org']}' "
+                f"(does not match AZURE_ORG='{org}'): {url}",
+                file=sys.stderr,
+            )
             continue
         prs.append(parsed)
 
@@ -272,8 +282,6 @@ def main() -> None:
     connection = get_connection(org_url, pat)
     git_client = connection.clients.get_git_client()
     build_client = connection.clients.get_build_client()
-    # Attach connection ref so trigger_pipeline can build the run URL
-    build_client._connection = connection
 
     user_id = get_current_user_id(connection, pat)
     if not user_id:
@@ -314,7 +322,7 @@ def main() -> None:
         # Step 4: Trigger pipeline (once per project/repo pair)
         pipeline_key = f"{project}/{repo}"
         if not args.no_pipeline and pipeline_key not in triggered_pipelines:
-            run_url, err = trigger_pipeline(build_client, project, repo, args.branch)
+            run_url, err = trigger_pipeline(build_client, org_url, project, repo, args.branch)
             if run_url:
                 print(f"  ✔ Pipeline triggered: {run_url}")
                 triggered_pipelines.add(pipeline_key)

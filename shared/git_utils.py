@@ -12,6 +12,8 @@ Usage:
     commits       = commit_log_vs_target(branch, "release_candidate")
 """
 
+from __future__ import annotations
+
 import subprocess
 import sys
 
