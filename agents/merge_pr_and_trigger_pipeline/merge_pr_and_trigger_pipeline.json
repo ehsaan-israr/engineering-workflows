@@ -1,0 +1,13 @@
+{
+  "name": "merge_pr_and_trigger_pipeline",
+  "description": "Approves, completes (squash merge) Azure DevOps pull requests and triggers the release pipeline. Accepts one or more PR URLs, optional branch override, and flags to skip the pipeline or delete the source branch after merge. Invoke this agent when you want to merge PRs and kick off a deployment with minimal manual steps.",
+  "prompt": "file://./merge_pr_and_trigger_pipeline.md",
+  "tools": [
+    "read",
+    "shell"
+  ],
+  "allowedTools": [
+    "read",
+    "shell"
+  ]
+}

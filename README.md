@@ -8,16 +8,19 @@ A structured collection of AI agents, scripts, and shared utilities for automati
 engineering-workflows/
 ├── agents/
 │   ├── create_azure_pr/                    # Create Azure DevOps PRs with Jira enrichment
-│   │   ├── create_azure_pr.md              # Agent definition (for Kiro/Claude)
+│   │   ├── create_azure_pr.md              # Agent definition (Markdown, for Kiro IDE/Claude)
+│   │   ├── create_azure_pr.json            # Agent definition (JSON, for Kiro CLI)
 │   │   └── scripts/
 │   │       ├── fetch_jira_ticket_title.py  # Resolves PR title from Jira ticket
 │   │       └── create_azure_devops_pr.py   # Creates the PR on Azure DevOps
 │   ├── list_assigned_jira_tickets/         # List and spotlight Jira tickets by user
-│   │   ├── list_assigned_jira_tickets.md   # Agent definition (for Kiro/Claude)
+│   │   ├── list_assigned_jira_tickets.md   # Agent definition (Markdown, for Kiro IDE/Claude)
+│   │   ├── list_assigned_jira_tickets.json # Agent definition (JSON, for Kiro CLI)
 │   │   └── scripts/
 │   │       └── list_assigned_jira_tickets.py
 │   └── merge_pr_and_trigger_pipeline/      # Merge PRs and trigger release pipeline
-│       ├── merge_pr_and_trigger_pipeline.md # Agent definition (for Kiro/Claude)
+│       ├── merge_pr_and_trigger_pipeline.md   # Agent definition (Markdown, for Kiro IDE/Claude)
+│       ├── merge_pr_and_trigger_pipeline.json # Agent definition (JSON, for Kiro CLI)
 │       └── scripts/
 │           └── merge_pr_and_trigger_pipeline.py
 ├── shared/                                 # Shared Python utilities
@@ -72,10 +75,18 @@ chmod +x setup_agents.sh
 
 This will:
 - Write `~/.workflow_env` with `WORKFLOW_REPO_ROOT` and `WORKFLOW_PYTHON` pointing at this repo's venv
-- Hard-link all agent `.md` files to `~/.kiro/agents/` (Kiro picks up `.md` files automatically)
+- Hard-link all agent `.md` files to `~/.kiro/agents/` (Kiro IDE picks up `.md` files automatically)
+- Hard-link all agent `.json` files to `~/.kiro/agents/` (Kiro CLI reads agents in JSON format)
 - Symlink all agent `.md` files to `~/.claude/agents/` (Claude Code)
 
 Re-run `setup_agents.sh` whenever you add a new agent or move the repo.
+
+> **Kiro CLI (JSON agents):** Each agent ships a `{agent_name}.json` config next to its
+> `.md` definition. The JSON references the prompt via a relative `file://./{agent_name}.md`
+> URI, so the two files must stay side by side — which is exactly how `setup_agents.sh`
+> links them into `~/.kiro/agents/`. You can also drop the `agents/` tree into a project's
+> `.kiro/agents/` directory to use them as workspace-local agents. List them with
+> `kiro-cli agent list` and switch with `/agent swap {agent_name}`.
 
 ### 5. Configure credentials
 
