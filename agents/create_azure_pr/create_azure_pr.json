@@ -1,0 +1,13 @@
+{
+  "name": "create_azure_pull_request",
+  "description": "Creates Azure DevOps pull requests with full pre-flight checks. Ensures code is committed, rebases with the remote target branch, handles merge conflicts interactively, and builds a rich PR description from Jira ticket info and commit history. Invoke this agent when you want to push a branch and open a PR against Azure DevOps with minimal manual steps.",
+  "prompt": "file://./create_azure_pr.md",
+  "tools": [
+    "read",
+    "shell"
+  ],
+  "allowedTools": [
+    "read",
+    "shell"
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "name": "list_assigned_jira_tickets",
+  "description": "Lists Jira tickets assigned to one or more users, grouped by User then by Project, sorted by priority. Includes a dedicated highlight section at the bottom showing tickets updated within a recent window (default: last 1 day). Accepts an optional date range (default: last 30 days) and optional filters for user, project, and status. Invoke this agent when you want a comprehensive overview of active work plus immediate visibility into daily progress.",
+  "prompt": "file://./list_assigned_jira_tickets.md",
+  "tools": [
+    "read",
+    "shell"
+  ],
+  "allowedTools": [
+    "read",
+    "shell"
+  ]
+}

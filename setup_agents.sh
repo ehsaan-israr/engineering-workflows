@@ -34,3 +34,18 @@ find "$REPO_AGENTS" -mindepth 2 -name "*.md" | while read -r md_file; do
   ln -sfn "$md_file" "$CLAUDE_DIR/$agent_name"
   echo "✔ [Claude] Linked $md_name → $CLAUDE_DIR/$agent_name"
 done
+
+# 3. Link Kiro CLI agents (JSON format)
+# Kiro CLI reads custom agents as JSON files from ~/.kiro/agents/. Each agent's
+# JSON references its prompt via a relative file:// URI (e.g. file://./<name>.md),
+# so the .md hard-linked above sits alongside the .json and resolves correctly.
+find "$REPO_AGENTS" -mindepth 2 -name "*.json" | while read -r json_file; do
+  json_name=$(basename "$json_file")
+
+  # Remove existing link if it exists
+  rm -f "$KIRO_DIR/$json_name"
+
+  # Hard link for Kiro (falls back to copy across filesystems)
+  ln -f "$json_file" "$KIRO_DIR/$json_name" 2>/dev/null || cp -f "$json_file" "$KIRO_DIR/$json_name"
+  echo "✔ [Kiro CLI] Hard linked/Copied $json_name → $KIRO_DIR/$json_name"
+done
